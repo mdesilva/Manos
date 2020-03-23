@@ -10,8 +10,9 @@
 using namespace std;
 using namespace rocksdb;
 
-Workload::Workload(string workloadFilePath) {
+Workload::Workload(string workloadFilePath, int workloadSize) {
     this->workloadFile = fstream (workloadFilePath);
+    this->workloadSize = workloadSize;
     if (this->workloadFile.is_open()) {
         this->pointQueries = get_val_from_line();
         this->rangeQueries = get_val_from_line();
@@ -65,8 +66,8 @@ void Workload::open_database() {
 
 void Workload::generate_data() {
     int index;
-    cout << "Generating data..." << endl;
-    for (index=0; index <100; index++) {
+    cout << ("Generating " + to_string(this->workloadSize) + " key-value pairs...")<< endl;
+    for (index=0; index < this->workloadSize; index++) {
         string key = "key" + to_string(index);
         this->db->Put(WriteOptions(), key, "Manuja");
     }

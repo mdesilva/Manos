@@ -19,8 +19,9 @@ public:
     float rangeInserts;
     float rangeUpdates;
     float rangeDeletes;
+    int workloadSize;
 
-    Workload (string workloadFilePath);
+    Workload (string workloadFilePath, int workloadSize);
     bool verify_proportions();
     float get_val_from_line();
     void open_database();
