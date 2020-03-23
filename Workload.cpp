@@ -6,13 +6,15 @@
 #include <fstream>
 #include "Workload.h"
 #include "rocksdb/db.h"
+#include <chrono>
 
 using namespace std;
 using namespace rocksdb;
 
-Workload::Workload(string workloadFilePath, int workloadSize) {
+Workload::Workload(string workloadFilePath, int datasetSize, int numTotalQueries) {
     this->workloadFile = fstream (workloadFilePath);
-    this->workloadSize = workloadSize;
+    this->datasetSize = datasetSize;
+    this->numTotalQueries = numTotalQueries;
     if (this->workloadFile.is_open()) {
         this->pointQueries = get_val_from_line();
         this->rangeQueries = get_val_from_line();
@@ -66,10 +68,25 @@ void Workload::open_database() {
 
 void Workload::generate_data() {
     int index;
-    cout << ("Generating " + to_string(this->workloadSize) + " key-value pairs...")<< endl;
-    for (index=0; index < this->workloadSize; index++) {
-        string key = "key" + to_string(index);
-        this->db->Put(WriteOptions(), key, "Manuja");
+    cout << ("Generating " + to_string(this->datasetSize) + " key-value pairs...")<< endl;
+    for (index=0; index < this->datasetSize; index++) {
+        this->db->Put(WriteOptions(), ("key" + to_string(index)), ("Manuja" + to_string(index)));
     }
     cout << "Done generating data." << endl;
 }
+
+void Workload::exec_point_queries() {
+    int numPointQueries = this->numTotalQueries * this->pointQueries;
+
+    auto startTime = chrono::steady_clock::now();
+    for (int count=0; count < numPointQueries; count++) {
+        string value;
+        //get random key to query
+        int randomKey = rand() % this->datasetSize;
+        this->db->Get(ReadOptions(), ("key" + to_string(randomKey)), &value);
+    }
+    auto endTime = chrono::steady_clock::now();
+
+    cout << "Executing " << numPointQueries << " point queries took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+}
+

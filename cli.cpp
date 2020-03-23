@@ -10,7 +10,8 @@ using namespace std;
  */
 
 int main(int argc, char **argv) {
-    int workloadSize;
+    int datasetSize;
+    int numTotalQueries;
     if (argc < 2) {
         cout << "Please specify a file that contains workload information." << endl;
         return -1;
@@ -18,11 +19,20 @@ int main(int argc, char **argv) {
 
     if (argc < 3) {
         cout << "Workload size not defined. Defaulting to 100 key value pairs." << endl;
-        workloadSize = 100;
+        datasetSize = 100;
     } else {
-        workloadSize = stoi(argv[2]);
+        datasetSize = stoi(argv[2]);
     }
+
+    if (argc < 4) {
+        cout << "Number of total queries not defined. Defaulting to 100 total queries. " << endl;
+        numTotalQueries = 100;
+    } else {
+        numTotalQueries = stoi(argv[3]);
+    }
+
     string filePath = argv[1];
-    Workload workload (filePath, workloadSize);
+    Workload workload (filePath, datasetSize, numTotalQueries);
+    workload.exec_point_queries();
     return 0;
 }
