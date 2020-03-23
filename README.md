@@ -3,7 +3,7 @@
 Benchmark RocksDB using both bounded and unbounded data workloads.
 
 ## Prerequisites
-RocksDB: https://github.com/facebook/rocksdb.git
+RocksDB: https://github.com/facebook/rocksdb.git </br>
 C++11
 
 ## Compiling
