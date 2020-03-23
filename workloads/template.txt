@@ -1,0 +1,12 @@
+#PercentPointQueries=
+#PercentRangeQueries=
+#PercentPointInserts=
+#PercentPointUpdates=
+#PercentPointDeletes=
+#PercentRangeInserts=
+#PercentRangeUpdates=
+#PercentRangeDeletes=
+
+"""
+All workload files must follow the above template, with a float number after each type of database operation.
+"""

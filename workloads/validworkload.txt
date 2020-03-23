@@ -1,0 +1,8 @@
+#PercentPointQueries=0.1
+#PercentRangeQueries=0.1
+#PercentPointInserts=0.1
+#PercentPointUpdates=0.1
+#PercentPointDeletes=0.1
+#PercentRangeInserts=0.3
+#PercentRangeUpdates=0.1
+#PercentRangeDeletes=0.1
