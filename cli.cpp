@@ -1,7 +1,4 @@
-#include "rocksdb/db.h"
 #include <iostream>
-#include <string>
-#include <fstream>
 #include "Workload.h"
 
 using namespace std;
@@ -17,19 +14,5 @@ int main(int argc, char **argv) {
     }
     string filePath = argv[1];
     Workload workload (filePath);
-    return 0;
-}
-
-int insertKey() {
-    using namespace rocksdb;
-    DB* db;
-    Options options;
-    options.create_if_missing = true;
-    Status status = DB::Open(options, "/tmp/testdb", &db);
-    assert(status.ok());
-    status = db->Put(WriteOptions(), "key1", "Manuja");
-    string value;
-    status = db->Get(ReadOptions(), "key1", &value);
-    cout << value << endl;
     return 0;
 }
