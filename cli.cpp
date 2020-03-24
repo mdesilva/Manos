@@ -1,5 +1,7 @@
 #include <iostream>
 #include "Workload.h"
+#include <cstdlib>
+
 
 using namespace std;
 
@@ -12,27 +14,35 @@ using namespace std;
 int main(int argc, char **argv) {
     int datasetSize;
     int numTotalQueries;
+
     if (argc < 2) {
-        cout << "Please specify a file that contains workload information." << endl;
+        cout << "Please specify a file that contains workload information" << endl;
         return -1;
     }
 
     if (argc < 3) {
-        cout << "Workload size not defined. Defaulting to 100 key value pairs." << endl;
-        datasetSize = 100;
-    } else {
-        datasetSize = stoi(argv[2]);
+        cout << "Please specify a size for the range query" << endl;
+        return -1;
     }
 
     if (argc < 4) {
+        cout << "Workload size not defined. Defaulting to 1000 key value pairs." << endl;
+        datasetSize = 1000;
+    } else {
+        datasetSize = stoi(argv[3]);
+    }
+
+    if (argc < 5) {
         cout << "Number of total queries not defined. Defaulting to 100 total queries. " << endl;
         numTotalQueries = 100;
     } else {
-        numTotalQueries = stoi(argv[3]);
+        numTotalQueries = stoi(argv[4]);
     }
 
     string filePath = argv[1];
-    Workload workload (filePath, datasetSize, numTotalQueries);
+    int rangeSize = stoi(argv[2]);
+    Workload workload (filePath, datasetSize, rangeSize, numTotalQueries);
     workload.exec_point_queries();
+    workload.exec_range_queries();
     return 0;
 }

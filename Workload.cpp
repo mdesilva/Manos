@@ -11,10 +11,11 @@
 using namespace std;
 using namespace rocksdb;
 
-Workload::Workload(string workloadFilePath, int datasetSize, int numTotalQueries) {
+Workload::Workload(string workloadFilePath, int datasetSize, int rangeSize, int numTotalQueries) {
     this->workloadFile = fstream (workloadFilePath);
     this->datasetSize = datasetSize;
     this->numTotalQueries = numTotalQueries;
+    this->rangeSize = rangeSize;
     if (this->workloadFile.is_open()) {
         this->pointQueries = get_val_from_line();
         this->rangeQueries = get_val_from_line();
@@ -88,5 +89,25 @@ void Workload::exec_point_queries() {
     auto endTime = chrono::steady_clock::now();
 
     cout << "Executing " << numPointQueries << " point queries took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+}
+
+void Workload::exec_range_queries(){
+    int numRangeQueries = this->numTotalQueries * this->rangeQueries;
+    int rangeSize = this->rangeSize;
+    int i = 0;
+    auto startTime = chrono::steady_clock::now();
+    while(i < numRangeQueries){
+        int start = rand() % (this->datasetSize - rangeSize);
+        for (int count=0; count < rangeSize; count++) {
+            string value;
+            int key = start;
+            this->db->Get(ReadOptions(), ("key" + to_string(key)), &value);
+            key++;
+        }
+        i++;
+    }
+    auto endTime = chrono::steady_clock::now();
+
+    cout << "Executing " << numRangeQueries << " range queries took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
 }
 

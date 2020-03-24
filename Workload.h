@@ -13,6 +13,7 @@ public:
     fstream workloadFile;
     int datasetSize;
     int numTotalQueries;
+    int rangeSize;
     DB* db;
 
     //Each of these floats represent the proportion of the type of query.
@@ -27,10 +28,12 @@ public:
     float rangeDeletes;
 
 
-    Workload (string workloadFilePath, int datasetSize, int numTotalQueries);
+    Workload (string workloadFilePath, int datasetSize, int rangeSize, int numTotalQueries);
     bool verify_proportions();
     float get_val_from_line();
     void open_database();
     void generate_data();
     void exec_point_queries();
+    void exec_range_queries();
+
 };
