@@ -16,12 +16,12 @@ int main(int argc, char **argv) {
     int numTotalQueries;
 
     if (argc < 2) {
-        cout << "Please specify a file that contains workload information" << endl;
+        cout << "Please specify a file that contains workload information." << endl;
         return -1;
     }
 
     if (argc < 3) {
-        cout << "Please specify a size for the range query" << endl;
+        cout << "Please specify a size for the range query." << endl;
         return -1;
     }
 
@@ -44,5 +44,8 @@ int main(int argc, char **argv) {
     Workload workload (filePath, datasetSize, rangeSize, numTotalQueries);
     workload.exec_point_queries();
     workload.exec_range_queries();
+    //exec point inserts
+    workload.exec_point_updates();
+    workload.exec_point_deletes();
     return 0;
 }
