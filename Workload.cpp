@@ -11,31 +11,32 @@
 using namespace std;
 using namespace rocksdb;
 
-Workload::Workload(string workloadFilePath, int datasetSize, int rangeSize, int numTotalQueries) {
+Workload::Workload(string workloadFilePath) {
     this->workloadFile = fstream (workloadFilePath);
-    this->datasetSize = datasetSize;
-    this->numTotalQueries = numTotalQueries;
-    this->rangeSize = rangeSize;
     if (this->workloadFile.is_open()) {
-        this->pointQueries = get_val_from_line();
-        this->rangeQueries = get_val_from_line();
-        this->pointInserts = get_val_from_line();
-        this->pointUpdates = get_val_from_line();
-        this->pointDeletes = get_val_from_line();
-        this->rangeInserts = get_val_from_line();
-        this->rangeUpdates = get_val_from_line();
-        this->rangeDeletes = get_val_from_line();
+        this->pointQueries = get_float_from_line();
+        this->rangeQueries = get_float_from_line();
+        this->pointInserts = get_float_from_line();
+        this->pointUpdates = get_float_from_line();
+        this->pointDeletes = get_float_from_line();
+        this->rangeInserts = get_float_from_line();
+        this->rangeUpdates = get_float_from_line();
+        this->rangeDeletes = get_float_from_line();
+        this->datasetSize = get_int_from_line();
+        this->numTotalQueries = get_int_from_line();
+        this->rangeSize = get_int_from_line();
         workloadFile.close();
         if (this->verify_proportions() == true) {
-            cout << "Successfully loaded workload." << endl;
-            this->open_database();
-            this->generate_data();
+            cout << "Successfully loaded workload from file. Beginning workload..." << endl;
+            this->exec_workload();
         } else {
-            cout << "Workload proportions do not add up to 1. Please check your numbers." << endl;
+            cout << "Workload proportions do not add up to 1. Please try again." << endl;
         }
     } else {
-        cout << "Unable to open file";
+        cout << "Unable to open specified file. " << endl;
     }
+}
+Workload::Workload() {
 }
 
 bool Workload::verify_proportions() {
@@ -52,12 +53,20 @@ bool Workload::verify_proportions() {
     ) == 1.0;
 }
 
-float Workload::get_val_from_line() {
+float Workload::get_float_from_line() {
     string line;
     getline(this->workloadFile, line);
     size_t split_pos = line.find("=");
     return stof(line.substr(split_pos + 1));
 }
+
+int Workload::get_int_from_line() {
+    string line;
+    getline(this->workloadFile, line);
+    size_t split_pos = line.find("=");
+    return stoi(line.substr(split_pos + 1));
+}
+
 
 void Workload::open_database() {
     Options options;
@@ -137,3 +146,13 @@ void Workload::exec_point_deletes() {
     cout << "Executing " << numPointDeletes << " point deletes took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
 }
 
+void Workload::exec_workload() {
+    cout << "---PHASE 1: GENERATE DATA---" << endl;
+    this->open_database();
+    this->generate_data();
+    cout << "---PHASE 2: STATISTICS---" << endl;
+    this->exec_point_queries();
+    this->exec_range_queries();
+    this->exec_point_updates();
+    this->exec_point_deletes();
+}

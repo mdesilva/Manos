@@ -28,9 +28,11 @@ public:
     float rangeDeletes;
 
 
-    Workload (string workloadFilePath, int datasetSize, int rangeSize, int numTotalQueries);
+    Workload (string workloadFilePath);
+    Workload ();
     bool verify_proportions();
-    float get_val_from_line();
+    float get_float_from_line();
+    int get_int_from_line();
     void open_database();
     void generate_data();
     void exec_point_queries();
@@ -38,4 +40,5 @@ public:
     //void exec_point_inserts();
     void exec_point_updates();
     void exec_point_deletes();
+    void exec_workload();
 };
