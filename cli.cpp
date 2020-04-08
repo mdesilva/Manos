@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
             Workload workload (argv[2]);
             return 0;
         } else {
-            cout << "Unrecognized argument. Use -f to specify a workload parameter file." << endl;
+            cout << "Unrecognized flag. Use -f to specify a workload parameter file." << endl;
             return -1;
         }
     } else {

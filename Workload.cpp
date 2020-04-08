@@ -80,7 +80,7 @@ void Workload::generate_data() {
     int index;
     cout << ("Generating " + to_string(this->datasetSize) + " key-value pairs...")<< endl;
     for (index=0; index < this->datasetSize; index++) {
-        this->db->Put(WriteOptions(), ("key" + to_string(index)), ("Manuja" + to_string(index)));
+        this->db->Put(WriteOptions(), (to_string(index)), ("Arbitrary" + to_string(index)));
     }
     cout << "Done generating data." << endl;
 }
@@ -93,7 +93,7 @@ void Workload::exec_point_queries() {
         string value;
         //get random key to query
         int randomKey = rand() % this->datasetSize;
-        this->db->Get(ReadOptions(), ("key" + to_string(randomKey)), &value);
+        this->db->Get(ReadOptions(), (to_string(randomKey)), &value);
     }
     auto endTime = chrono::steady_clock::now();
 
@@ -111,7 +111,7 @@ void Workload::exec_range_queries(){
         for (int count=0; count < rangeSize; count++) {
             string value;
             int key = start;
-            this->db->Get(ReadOptions(), ("key" + to_string(key)), &value);
+            this->db->Get(ReadOptions(), (to_string(key)), &value);
             key++;
         }
         i++;
@@ -128,7 +128,7 @@ void Workload::exec_point_updates() {
     for (int i=0; i < numPointUpdates; i++) {
         string value;
         int randomKey = rand() % this->datasetSize;
-        this->db->Put(WriteOptions(), ("key" + to_string(randomKey)), ("Update" + to_string(randomKey)));
+        this->db->Put(WriteOptions(), (to_string(randomKey)), ("Update" + to_string(randomKey)));
     }
     auto endTime = chrono::steady_clock::now();
     cout << "Executing " << numPointUpdates << " point updates took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
@@ -140,7 +140,7 @@ void Workload::exec_point_deletes() {
     auto startTime = chrono::steady_clock::now();
     for (int i=0; i < numPointDeletes; i++) {
         int randomKey = rand() % this->datasetSize;
-        this->db->Delete(WriteOptions(), ("key" + to_string(randomKey)));
+        this->db->Delete(WriteOptions(), (to_string(randomKey)));
     }
     auto endTime = chrono::steady_clock::now();
     cout << "Executing " << numPointDeletes << " point deletes took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
