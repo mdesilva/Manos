@@ -37,8 +37,11 @@ public:
     void generate_data();
     void exec_point_queries();
     void exec_range_queries();
-    //void exec_point_inserts();
+    void exec_point_inserts();
     void exec_point_updates();
     void exec_point_deletes();
+    void exec_range_inserts();
+    void exec_range_updates();
+    void exec_range_deletes();
     void exec_workload();
 };

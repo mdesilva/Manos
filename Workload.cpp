@@ -146,6 +146,68 @@ void Workload::exec_point_deletes() {
     cout << "Executing " << numPointDeletes << " point deletes took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
 }
 
+void Workload::exec_point_inserts() {
+    int numPointInserts = this->numTotalQueries * this->pointInserts;
+
+    auto startTime = chrono::steady_clock::now();
+    for (int i=0; i < numPointInserts; i++) {
+        int key = this->datasetSize + i;
+        this->db->Put(WriteOptions(), to_string(key), ("Arbitrary" + to_string(key)));
+    }
+    auto endTime = chrono::steady_clock::now();
+    this->datasetSize = this->datasetSize + numPointInserts;
+    cout << "Executing " << numPointInserts << " point inserts took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+}
+
+void Workload::exec_range_inserts() {
+    int numTotalRangeInserts = this->numTotalQueries * this->rangeInserts;
+    int numCompletedRangeInserts = 0;
+    auto startTime = chrono::steady_clock::now();
+    while (numCompletedRangeInserts < numTotalRangeInserts) {
+        for (int i=0; i < this->rangeSize; i++) {
+            int key = this->datasetSize + i;
+            this->db->Put(WriteOptions(), to_string(key), ("Arbitrary" + to_string(key)));
+        }
+        this->datasetSize = this->datasetSize + rangeSize;
+        numCompletedRangeInserts = numCompletedRangeInserts + 1;
+    }
+    auto endTime = chrono::steady_clock::now();
+    cout << "Executing " << numTotalRangeInserts << " range inserts took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+}
+
+void Workload::exec_range_updates() {
+    int numTotalRangeUpdates = this->numTotalQueries * this->rangeUpdates;
+    int numCompletedRangeUpdates = 0;
+    auto startTime = chrono::steady_clock::now();
+    while (numCompletedRangeUpdates < numTotalRangeUpdates) {
+        //pick random range to do updates on
+        int randomStartKey = rand() % (this->datasetSize - this->rangeSize);
+        for (int i=0; i < this->rangeSize; i++ ) {
+            int key = randomStartKey + i;
+            this->db->Put(WriteOptions(), to_string(key), "Updated" + to_string(key));
+        }
+        numCompletedRangeUpdates = numCompletedRangeUpdates + 1;
+    }
+    auto endTime = chrono::steady_clock::now();
+    cout << "Executing " << numTotalRangeUpdates << " range updates took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+}
+
+void Workload::exec_range_deletes() {
+    int numTotalRangeDeletes = this->numTotalQueries * this->rangeDeletes;
+    int numCompletedRangeDeletes = 0;
+    int startKey = 0;
+    auto startTime = chrono::steady_clock::now();
+    while (numCompletedRangeDeletes < numTotalRangeDeletes) {
+        int endKey = startKey + this->rangeSize;
+        this->db->DeleteRange(WriteOptions(), nullptr, to_string(startKey), to_string(endKey));
+        startKey = startKey + this->rangeSize;
+        numCompletedRangeDeletes = numCompletedRangeDeletes + 1;
+    }
+    auto endTime = chrono::steady_clock::now();
+    cout << "Executing " << numTotalRangeDeletes << " range deletes took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+
+}
+
 void Workload::exec_workload() {
     cout << "---PHASE 1: GENERATE DATA---" << endl;
     this->open_database();
@@ -153,6 +215,11 @@ void Workload::exec_workload() {
     cout << "---PHASE 2: STATISTICS---" << endl;
     this->exec_point_queries();
     this->exec_range_queries();
+    this->exec_point_inserts();
     this->exec_point_updates();
     this->exec_point_deletes();
+    this->exec_range_inserts();
+    this->exec_range_updates();
+    this->exec_range_deletes();
+
 }
