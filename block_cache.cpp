@@ -6,6 +6,7 @@
 #include "rocksdb/table.h"
 #include <iostream>
 #include <chrono>
+#include "Experiments/BlockCacheExperiment.h"
 
 using namespace std;
 using namespace rocksdb;
@@ -59,6 +60,12 @@ int main() {
     cout << "L1 HIT " << options.statistics->getTickerCount(GET_HIT_L1) << endl;
     cout << "MEMTABLE HIT " << options.statistics->getTickerCount(MEMTABLE_HIT) << endl;
     cout << "MEMTABLE MISS " << options.statistics->getTickerCount(MEMTABLE_MISS) << endl;
-
 }
 
+//int main() {
+//    vector<int> cache_sizes;
+//    cache_sizes.assign({8, 128, 256});
+//    BlockCacheExperiment experiment;
+//    experiment.experiment_values_ = cache_sizes;
+//    experiment.RunExperiments();
+//}
