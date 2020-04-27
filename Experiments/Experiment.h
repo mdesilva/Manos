@@ -6,11 +6,12 @@
 #include "rocksdb/table.h"
 #include <iostream>
 #include <chrono>
+#include "../RocksDBOptions.h"
 
 #define DEFAULT_WORKLOAD_SIZE 10000000
 
 /*
- * Conduct num_experiments testing the effect of tuning some RocksDB parameter, subsituting experiment_values for the parameter for each experiment, on a specified workload
+ * Conduct Experiments testing the effect of tuning some RocksDB parameter, subsituting experiment_values for the parameter for each experiment, on a specified workload
  */
 class Experiment {
 public:
@@ -18,6 +19,7 @@ public:
     rocksdb::DB* db_;
     rocksdb::Options options_;
     rocksdb::BlockBasedTableOptions table_options_;
+    RocksDBOptions tuner; //Use RocksDBOptions to automatically adjust RocksDB options
 
     void RunExperiments();
     void CreateDBWithOptions();

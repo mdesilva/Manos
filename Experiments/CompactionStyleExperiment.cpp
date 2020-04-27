@@ -5,11 +5,9 @@
 
 
 void CompactionStyleExperiment::SpecifyParameters(int parameter) {
-    if (parameter == 0) {
-        this->options_.compaction_style = rocksdb::kCompactionStyleLevel;
-    } else {
-        this->options_.compaction_style = rocksdb::kCompactionStyleUniversal;
-    }
+    this->tuner.options_ = this->options_;
+    this->tuner.SetCompactionStrategy(parameter);
+    this->options_ = this->tuner.FinalizeOptions();
 }
 
 void CompactionStyleExperiment::FillDB() {}

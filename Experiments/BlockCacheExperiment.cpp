@@ -6,8 +6,9 @@
 
 
 void BlockCacheExperiment::SpecifyParameters(int cache_size) {
-    this->table_options_.block_cache = NewLRUCache(cache_size << 20);
-    this->options_.table_factory.reset(NewBlockBasedTableFactory(this->table_options_));
+    this->tuner.options_ = this->options_;
+    this->tuner.SetLRUCacheSize(cache_size);
+    this->options_ = this->tuner.FinalizeOptions();
 }
 
 void BlockCacheExperiment::RunExperiment(int cache_size) {
