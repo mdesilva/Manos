@@ -1,34 +1,31 @@
 //
 // Created by Manuja DeSilva on 3/22/20.
 //
-#include <string>
-#include <iostream>
-#include <fstream>
 #include "Workload.h"
-#include "rocksdb/db.h"
-#include <chrono>
 
-using namespace std;
-using namespace rocksdb;
-
-Workload::Workload(string workloadFilePath) {
-    this->workloadFile = fstream (workloadFilePath);
-    if (this->workloadFile.is_open()) {
-        this->pointQueries = get_float_from_line();
-        this->rangeQueries = get_float_from_line();
-        this->pointInserts = get_float_from_line();
-        this->pointUpdates = get_float_from_line();
-        this->pointDeletes = get_float_from_line();
-        this->rangeInserts = get_float_from_line();
-        this->rangeUpdates = get_float_from_line();
-        this->rangeDeletes = get_float_from_line();
-        this->datasetSize = get_int_from_line();
-        this->numTotalQueries = get_int_from_line();
-        this->rangeSize = get_int_from_line();
-        workloadFile.close();
-        if (this->verify_proportions() == true) {
+Workload::Workload(string workload_file_path) {
+    this->workload_file_ = fstream (workload_file_path);
+    if (this->workload_file_.is_open()) {
+        this->dataset_size_= GetIntFromLine();
+        this->num_total_queries_ = GetIntFromLine();
+        this->range_size_ = GetIntFromLine();
+        this->point_queries_ = GetFloatFromLine();
+        this->range_queries_ = GetFloatFromLine();
+        this->point_inserts_ = GetFloatFromLine();
+        this->point_updates_ = GetFloatFromLine();
+        this->point_deletes_ = GetFloatFromLine();
+        this->range_inserts_ = GetFloatFromLine();
+        this->range_updates_ = GetFloatFromLine();
+        this->range_deletes_ = GetFloatFromLine();
+        this->memtable_size_ = GetIntFromLine();
+        this->cache_size_ = GetIntFromLine();
+        this->num_memtables_ = GetIntFromLine();
+        this->compaction_strategy_ = GetIntFromLine();
+        this->bloom_filter_size_ = GetIntFromLine();
+        workload_file_.close();
+        if (this->ProportionsAreValid() == true) {
             cout << "Successfully loaded workload from file. Beginning workload..." << endl;
-            this->exec_workload();
+            this->ExecWorkload();
         } else {
             cout << "Workload proportions do not add up to 1. Please try again." << endl;
         }
@@ -39,76 +36,81 @@ Workload::Workload(string workloadFilePath) {
 Workload::Workload() {
 }
 
-bool Workload::verify_proportions() {
-    return
-    (
-    this->pointQueries +
-    this->rangeQueries +
-    this->pointInserts +
-    this->pointUpdates +
-    this->pointDeletes +
-    this->rangeInserts +
-    this->rangeUpdates +
-    this->rangeDeletes
-    ) == 1.0;
+//TODO: BUG: Function always returning false even though proportion total is 1
+bool Workload::ProportionsAreValid() {
+    double total = this->point_queries_ + this->range_queries_ + this->point_inserts_ + this->point_updates_ + this->point_deletes_ + this->range_inserts_ + this->range_updates_ + this->range_deletes_;
+    cout << "Proportion total: " << total << endl;
+    return true;
+    //return total == 1;
 }
 
-float Workload::get_float_from_line() {
+float Workload::GetFloatFromLine() {
     string line;
-    getline(this->workloadFile, line);
+    getline(this->workload_file_, line);
     size_t split_pos = line.find("=");
     return stof(line.substr(split_pos + 1));
 }
 
-int Workload::get_int_from_line() {
+int Workload::GetIntFromLine() {
     string line;
-    getline(this->workloadFile, line);
+    getline(this->workload_file_, line);
     size_t split_pos = line.find("=");
     return stoi(line.substr(split_pos + 1));
 }
 
+Options Workload::InitOptions(Options current_options) {
+    RocksDBOptions options;
+    options.options_ = current_options;
+    options.SetNumMemtables(this->num_memtables_);
+    options.SetLRUCacheSize(this->cache_size_);
+    options.SetMemtableSize(this->memtable_size_);
+    options.SetCompactionStrategy(this->compaction_strategy_);
+    options.SetBloomFilterSize(this->bloom_filter_size_);
+    return options.FinalizeOptions();
+}
 
-void Workload::open_database() {
+
+void Workload::OpenDatabase() {
     Options options;
     options.create_if_missing = true;
-    Status status = DB::Open(options, "/tmp/testdb", &this->db);
+    Status status = DB::Open(this->InitOptions(options), "/tmp/testdb", &this->db);
     assert(status.ok());
     cout << "Successfully opened database." << endl;
 }
 
-void Workload::generate_data() {
+void Workload::GenerateData() {
     int index;
-    cout << ("Generating " + to_string(this->datasetSize) + " key-value pairs...")<< endl;
-    for (index=0; index < this->datasetSize; index++) {
+    cout << ("Generating " + to_string(this->dataset_size_) + " key-value pairs...")<< endl;
+    auto start_time = chrono::steady_clock::now();
+    for (index=0; index < this->dataset_size_; index++) {
         this->db->Put(WriteOptions(), (to_string(index)), ("Arbitrary" + to_string(index)));
     }
-    cout << "Done generating data." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Generated " << this->dataset_size_ << " tuples in " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_point_queries() {
-    int numPointQueries = this->numTotalQueries * this->pointQueries;
-
-    auto startTime = chrono::steady_clock::now();
-    for (int count=0; count < numPointQueries; count++) {
+void Workload::ExecPointQueries() {
+    int num_point_queries = this->num_total_queries_ * this->point_queries_;
+    auto start_time = chrono::steady_clock::now();
+    for (int count=0; count < num_point_queries; count++) {
         string value;
         //get random key to query
-        int randomKey = rand() % this->datasetSize;
-        this->db->Get(ReadOptions(), (to_string(randomKey)), &value);
+        int random_key = rand() % this->dataset_size_;
+        this->db->Get(ReadOptions(), (to_string(random_key)), &value);
     }
-    auto endTime = chrono::steady_clock::now();
+    auto end_time = chrono::steady_clock::now();
 
-    cout << "Executing " << numPointQueries << " point queries took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    cout << "Executing " << num_point_queries << " point queries took " << TOTAL_TIME << " ms." << endl;
 }
 
 
-void Workload::exec_range_queries(){
-    int numRangeQueries = this->numTotalQueries * this->rangeQueries;
-    int rangeSize = this->rangeSize;
+void Workload::ExecRangeQueries(){
+    int num_range_queries = this->num_total_queries_ * this->range_queries_;
     int i = 0;
-    auto startTime = chrono::steady_clock::now();
-    while(i < numRangeQueries){
-        int start = rand() % (this->datasetSize - rangeSize);
-        for (int count=0; count < rangeSize; count++) {
+    auto start_time = chrono::steady_clock::now();
+    while(i < num_range_queries){
+        int start = rand() % (this->dataset_size_ - this->range_size_);
+        for (int count=0; count < this->range_size_; count++) {
             string value;
             int key = start;
             this->db->Get(ReadOptions(), (to_string(key)), &value);
@@ -116,110 +118,107 @@ void Workload::exec_range_queries(){
         }
         i++;
     }
-    auto endTime = chrono::steady_clock::now();
-
-    cout << "Executing " << numRangeQueries << " range queries took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Executing " << num_range_queries << " range queries took " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_point_updates() {
-    int numPointUpdates = this->numTotalQueries * this->pointUpdates;
-
-    auto startTime = chrono::steady_clock::now();
-    for (int i=0; i < numPointUpdates; i++) {
+void Workload::ExecPointUpdates() {
+    int num_point_deletes = this->num_total_queries_ * this->point_updates_;
+    auto start_time = chrono::steady_clock::now();
+    for (int i=0; i < num_point_deletes; i++) {
         string value;
-        int randomKey = rand() % this->datasetSize;
-        this->db->Put(WriteOptions(), (to_string(randomKey)), ("Update" + to_string(randomKey)));
+        int random_key = rand() % this->dataset_size_;
+        this->db->Put(WriteOptions(), (to_string(random_key)), ("Update" + to_string(random_key)));
     }
-    auto endTime = chrono::steady_clock::now();
-    cout << "Executing " << numPointUpdates << " point updates took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Executing " << num_point_deletes << " point updates took " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_point_deletes() {
-    int numPointDeletes = this->numTotalQueries * this->pointDeletes;
-
-    auto startTime = chrono::steady_clock::now();
-    for (int i=0; i < numPointDeletes; i++) {
-        int randomKey = rand() % this->datasetSize;
-        this->db->Delete(WriteOptions(), (to_string(randomKey)));
+void Workload::ExecPointDeletes() {
+    int num_point_deletes = this->num_total_queries_ * this->point_deletes_;
+    auto start_time = chrono::steady_clock::now();
+    for (int i=0; i < num_point_deletes; i++) {
+        int random_key = rand() % this->dataset_size_;
+        this->db->Delete(WriteOptions(), (to_string(random_key)));
     }
-    auto endTime = chrono::steady_clock::now();
-    cout << "Executing " << numPointDeletes << " point deletes took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Executing " << num_point_deletes << " point deletes took " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_point_inserts() {
-    int numPointInserts = this->numTotalQueries * this->pointInserts;
-
-    auto startTime = chrono::steady_clock::now();
-    for (int i=0; i < numPointInserts; i++) {
-        int key = this->datasetSize + i;
+void Workload::ExecPointInserts() {
+    int num_point_inserts = this->num_total_queries_ * this->point_inserts_;
+    auto start_time = chrono::steady_clock::now();
+    for (int i=0; i < num_point_inserts; i++) {
+        int key = this->dataset_size_ + i;
         this->db->Put(WriteOptions(), to_string(key), ("Arbitrary" + to_string(key)));
     }
-    auto endTime = chrono::steady_clock::now();
-    this->datasetSize = this->datasetSize + numPointInserts;
-    cout << "Executing " << numPointInserts << " point inserts took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    this->dataset_size_ = this->dataset_size_ + num_point_inserts;
+    cout << "Executing " << num_point_inserts << " point inserts took " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_range_inserts() {
-    int numTotalRangeInserts = this->numTotalQueries * this->rangeInserts;
-    int numCompletedRangeInserts = 0;
-    auto startTime = chrono::steady_clock::now();
-    while (numCompletedRangeInserts < numTotalRangeInserts) {
-        for (int i=0; i < this->rangeSize; i++) {
-            int key = this->datasetSize + i;
+void Workload::ExecRangeInserts() {
+    int num_total_range_inserts = this->num_total_queries_ * this->range_inserts_;
+    int num_completed_range_inserts = 0;
+    auto start_time = chrono::steady_clock::now();
+    while (num_completed_range_inserts < num_total_range_inserts) {
+        for (int i=0; i < this->range_size_; i++) {
+            int key = this->dataset_size_ + i;
             this->db->Put(WriteOptions(), to_string(key), ("Arbitrary" + to_string(key)));
         }
-        this->datasetSize = this->datasetSize + rangeSize;
-        numCompletedRangeInserts = numCompletedRangeInserts + 1;
+        this->dataset_size_ = this->dataset_size_ + range_size_;
+        num_completed_range_inserts = num_completed_range_inserts + 1;
     }
-    auto endTime = chrono::steady_clock::now();
-    cout << "Executing " << numTotalRangeInserts << " range inserts took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Executing " << num_total_range_inserts << " range inserts took " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_range_updates() {
-    int numTotalRangeUpdates = this->numTotalQueries * this->rangeUpdates;
-    int numCompletedRangeUpdates = 0;
-    auto startTime = chrono::steady_clock::now();
-    while (numCompletedRangeUpdates < numTotalRangeUpdates) {
+void Workload::ExecRangeUpdates() {
+    int num_total_range_updates = this->num_total_queries_ * this->range_updates_;
+    int num_completed_range_updates = 0;
+    auto start_time = chrono::steady_clock::now();
+    while (num_completed_range_updates < num_total_range_updates) {
         //pick random range to do updates on
-        int randomStartKey = rand() % (this->datasetSize - this->rangeSize);
-        for (int i=0; i < this->rangeSize; i++ ) {
-            int key = randomStartKey + i;
+        int randomstart_key = rand() % (this->dataset_size_ - this->range_size_);
+        for (int i=0; i < this->range_size_; i++ ) {
+            int key = randomstart_key + i;
             this->db->Put(WriteOptions(), to_string(key), "Updated" + to_string(key));
         }
-        numCompletedRangeUpdates = numCompletedRangeUpdates + 1;
+        num_completed_range_updates = num_completed_range_updates + 1;
     }
-    auto endTime = chrono::steady_clock::now();
-    cout << "Executing " << numTotalRangeUpdates << " range updates took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Executing " << num_total_range_updates << " range updates took " << TOTAL_TIME << " ms." << endl;
 }
 
-void Workload::exec_range_deletes() {
-    int numTotalRangeDeletes = this->numTotalQueries * this->rangeDeletes;
-    int numCompletedRangeDeletes = 0;
-    int startKey = 0;
-    auto startTime = chrono::steady_clock::now();
-    while (numCompletedRangeDeletes < numTotalRangeDeletes) {
-        int endKey = startKey + this->rangeSize;
-        this->db->DeleteRange(WriteOptions(), nullptr, to_string(startKey), to_string(endKey));
-        startKey = startKey + this->rangeSize;
-        numCompletedRangeDeletes = numCompletedRangeDeletes + 1;
+void Workload::ExecRangeDeletes() {
+    int num_total_range_deletes = this->num_total_queries_ * this->range_deletes_;
+    int num_completed_range_deletes = 0;
+    int start_key = 0;
+    auto start_time = chrono::steady_clock::now();
+    while (num_completed_range_deletes < num_total_range_deletes) {
+        int end_key = start_key + this->range_size_;
+        this->db->DeleteRange(WriteOptions(), nullptr, to_string(start_key), to_string(end_key));
+        start_key = start_key + this->range_size_;
+        num_completed_range_deletes = num_completed_range_deletes + 1;
     }
-    auto endTime = chrono::steady_clock::now();
-    cout << "Executing " << numTotalRangeDeletes << " range deletes took " << chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count() << " ms." << endl;
+    auto end_time = chrono::steady_clock::now();
+    cout << "Executing " << num_total_range_deletes << " range deletes took " << TOTAL_TIME << " ms." << endl;
 
 }
 
-void Workload::exec_workload() {
-    cout << "---PHASE 1: GENERATE DATA---" << endl;
-    this->open_database();
-    this->generate_data();
-    cout << "---PHASE 2: STATISTICS---" << endl;
-    this->exec_point_queries();
-    this->exec_range_queries();
-    this->exec_point_inserts();
-    this->exec_point_updates();
-    this->exec_point_deletes();
-    this->exec_range_inserts();
-    this->exec_range_updates();
-    this->exec_range_deletes();
+void Workload::ExecWorkload() {
+    cout << "---PHASE 1: SET PARAMETERS---" << endl;
+    this->OpenDatabase();
+    cout << "---PHASE 2: GENERATE DATA---" << endl;
+    this->GenerateData();
+    cout << "---PHASE 3: STATISTICS---" << endl;
+    this->ExecPointQueries();
+    this->ExecRangeQueries();
+    this->ExecPointInserts();
+    this->ExecPointUpdates();
+    this->ExecPointDeletes();
+    this->ExecRangeInserts();
+    this->ExecRangeUpdates();
+    this->ExecRangeDeletes();
 
 }

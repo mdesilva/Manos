@@ -27,10 +27,10 @@ int main(int argc, char **argv) {
     } else {
         //Interactive session
         Workload workload;
-        cout << "Beginning interactive benchmarking session..." << endl;
+
         cout << "Specify workload proportion information as decimals less than or equal to 1." << endl;
         cout << "Proportion of point queries: ";
-        cin >>  workload.pointQueries;
+        cin >> workload.pointQueries;
         cout << "Proportion of range queries: ";
         cin >> workload.rangeQueries;
         cout << "Proportion of point inserts: ";
@@ -46,19 +46,30 @@ int main(int argc, char **argv) {
         cout << "Proportion of range deletes: ";
         cin >> workload.rangeDeletes;
 
-        if (!workload.verify_proportions()) {
+        if (!workload.ProportionsAreValid()) {
             cout << "Workload proportions do not add up to 1. Please try again.";
             return -1;
         }
 
+        cout << "Beginning interactive benchmarking session..." << endl;
         cout << "Dataset size (# of key-value pairs): ";
         cin >> workload.datasetSize;
-
         cout << "Number of total queries: ";
         cin >> workload.numTotalQueries;
-
         cout << "Range size: ";
         cin >> workload.rangeSize;
+
+        cout << "Now beginning option definitions. To skip setting and use default, type -1.";
+        cout << "Options: Memtable size (MB)";
+        cin >> workload.memtable_size;
+        cout << "Options: Cache size (MB)";
+        cin >> workload.cache_size;
+        cout << "Options: Compaction strategy (0 for level, 1 for universal)";
+        cin >> workload.compaction_strategy;
+        cout << "Options: Bloom filter size (# of bits)";
+        cin >> workload.bloom_filter_size;
+        cout << "Options: # of Memtables: ";
+        cin >> workload.num_memtables;
 
         cout << "\nAll parameters specified. Beginning workload...\n" << endl;
         workload.exec_workload();
