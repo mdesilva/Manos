@@ -12,9 +12,17 @@ void Experiment::CreateDBWithOptions() {
 }
 
 void Experiment::FillDB() {
-    std::cout << "Writing to DB with default workload of 10M tuples..." << std::endl;
-    for(int i=0; i < 10000000; i++) {
+    std::cout << "Writing to DB with default workload of " << DEFAULT_WORKLOAD_SIZE <<  " tuples..." << std::endl;
+    for(int i=0; i < DEFAULT_WORKLOAD_SIZE; i++) {
         this->db_->Put(rocksdb::WriteOptions(), std::to_string(i), "Arbitrary");
+    }
+}
+
+bool Experiment::DBNotEmpty() {
+    if(this->options_.statistics->getTickerCount(rocksdb::BYTES_WRITTEN) > 0) {
+        return true;
+    } else {
+        return false;
     }
 }
 
