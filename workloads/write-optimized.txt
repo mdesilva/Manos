@@ -1,0 +1,16 @@
+DatasetSize=10000000
+NumberTotalQueries=500000
+RangeSize=1000
+PercentPointQueries=0.2
+PercentRangeQueries=0.1
+PercentPointInserts=0.2
+PercentPointUpdates=0.1
+PercentPointDeletes=0.1
+PercentRangeInserts=0.1
+PercentRangeUpdates=0.1
+PercentRangeDeletes=0.1
+MemtableSize=-1
+LRUCacheSize=-1
+NumMemtables=5
+CompactionStrategy=1
+BloomFilterSize=-1
