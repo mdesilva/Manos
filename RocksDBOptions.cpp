@@ -63,6 +63,30 @@ void RocksDBOptions::SetNumMemtables(int num_memtables) {
     }
 }
 
+void RocksDBOptions::SetMaxBackgroundCompactions(int num) {
+        this->options_.max_background_compactions = num;
+}
+
+void RocksDBOptions::SetMaxBackgroundFlushes(int num) {
+    this->options_.max_background_flushes = num;
+}
+
+void RocksDBOptions::SetBackgroundFlushThreads(int num) {
+    this->options_.env->SetBackgroundThreads(num, rocksdb::Env::Priority::HIGH);
+}
+
+void RocksDBOptions::SetBackgroundCompactThreads(int num_memtables) {
+    this->options_.env->SetBackgroundThreads(num, rocksdb::Env::Priority::LOW);
+}
+void RocksDBOptions::SetMaxWriteBuffer(int num) {
+    this->options_.max_write_buffer_number = num;
+}
+
+void RocksDBOptions::SetMinWriteBufferToMerge(int num) {
+    this->options_.min_write_buffer_number_to_merge = num;
+}
+
+
 rocksdb::Options RocksDBOptions::FinalizeOptions() {
     this->options_.table_factory.reset(NewBlockBasedTableFactory(this->table_options_));
     return this->options_;
