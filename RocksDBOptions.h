@@ -24,6 +24,14 @@ public:
     void SetCompactionStrategy(int type);
     void SetBloomFilterSize(int num_bits);
     void SetNumMemtables(int num_memtables);
+    void SetMaxBackgroundCompactions(int num);
+    void SetMaxBackgroundFlushes(int num);
+    void SetBackgroundFlushThreads(int num);
+    void SetBackgroundCompactThreads(int num);
+    void SetMaxWriteBuffer(int num);
+    void SetMinWriteBufferToMerge(int num);
+
+
     rocksdb::Options FinalizeOptions();
 };
 
